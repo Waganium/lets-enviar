@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enviar - Secure File Sharing</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        /* [Existing Styles Kept and Enhanced for Loading/Preview] */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg-primary: #000000; --bg-secondary: #1a1a1a; --bg-tertiary: #2a2a2a;
+            --text-primary: #ffffff; --text-secondary: #a0a0a0; --accent-primary: #3b82f6;
+            --accent-success: #10b981; --accent-danger: #ef4444; --accent-warning: #f59e0b;
+            --border-color: #333333;
+        }
+        body { font-family: -apple-system, system-ui, sans-serif; background: var(--bg-primary); color: var(--text-primary); line-height: 1.6; min-height: 100vh; }
+        .container { max-width: 1000px; margin: 0 auto; padding: 20px; }
+        header { display: flex; justify-content: space-between; align-items: center; padding: 20px 0; border-bottom: 2px solid var(--border-color); margin-bottom: 30px; }
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid var(--border-color); }
+        .tab { background: transparent; border: none; color: var(--text-secondary); padding: 12px 20px; cursor: pointer; border-bottom: 3px solid transparent; font-weight: bold; }
+        .tab.active { color: var(--accent-primary); border-bottom-color: var(--accent-primary); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .card { background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 12px; padding: 25px; margin-bottom: 20px; }
+        input, textarea { width: 100%; padding: 12px; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 6px; color: var(--text-primary); margin-top: 5px; }
+        .file-upload { border: 2px dashed var(--border-color); border-radius: 8px; padding: 30px; text-align: center; cursor: pointer; margin: 15px 0; }
+        .btn { padding: 12px 20px; border-radius: 6px; cursor: pointer; border: none; font-weight: bold; width: 100%; transition: 0.2s; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-primary { background: var(--accent-primary); color: white; }
+        .btn-danger { background: var(--accent-danger); color: white; }
+        .alert { position: fixed; top: 20px; right: 20px; padding: 15px; border-radius: 6px; display: none; z-index: 2000; box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
+        .alert.show { display: block; }
+        .post-item { background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; margin-bottom: 10px; }
+        .admin-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .stat-card { background: var(--bg-tertiary); padding: 15px; border-radius: 8px; text-align: center; }
+        .loading-spinner { display: inline-block; width: 20px; height: 20px; border: 3px solid rgba(255,255,255,.3); border-radius: 50%; border-top-color: #fff; animation: spin 1s ease-in-out infinite; margin-right: 10px; vertical-align: middle; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">enviar</div>
+            <button class="btn btn-danger" style="width: auto;" onclick="openAdminModal()">Admin</button>
+        </header>
+
+        <div id="alerts"></div>
+
+        <div id="main-app">
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab(event, 'create')">Create</button>
+                <button class="tab" onclick="switchTab(event, 'search')">Search</button>
+                <button class="tab" onclick="switchTab(event, 'delete')">Delete</button>
+            </div>
+
+            <div id="create-tab" class="tab-content active">
+                <div class="card">
+                    <div class="form-group">
+                        <label>Search Code (Unique identifier for others to find your post)</label>
+                        <input type="text" id="create-code" placeholder="e.g., MATH101">
+                    </div>
+                    <div class="file-upload" onclick="document.getElementById('file-input').click()">
+                        <input type="file" id="file-input" hidden onchange="handleFileSelect(event)">
+                        <div id="upload-label">📁 Click to upload or drag & drop (Max 5MB)</div>
+                        <div id="file-info" style="margin-top:10px; font-weight: bold; color: var(--accent-primary);"></div>
+                    </div>
+                    <textarea id="create-message" placeholder="Add an optional message..."></textarea>
+                    <button class="btn btn-primary" id="btn-create" style="margin-top:20px;" onclick="createPost()">Create Post</button>
+                </div>
+            </div>
+
+            <div id="search-tab" class="tab-content">
+                <div class="card">
+                    <input type="text" id="search-input" placeholder="Enter search code">
+                    <button class="btn btn-primary" style="margin-top:15px;" onclick="searchPosts()">Find Posts</button>
+                </div>
+                <div id="search-results"></div>
+            </div>
+
+            <div id="delete-tab" class="tab-content">
+                <div class="card" id="delete-initial">
+                    <input type="text" id="delete-code-input" placeholder="Enter 6-char Delete Code">
+                    <button class="btn btn-danger" style="margin-top:15px;" onclick="previewDelete()">Preview & Delete</button>
+                </div>
+                <div id="delete-preview"></div>
+            </div>
+        </div>
+
+        <div id="admin-panel" style="display:none;">
+            <div class="card">
+                <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
+                    <h2>Admin Dashboard</h2>
+                    <button class="btn btn-primary" style="width:auto;" onclick="exitAdmin()">Exit</button>
+                </div>
+                <div class="admin-stats">
+                    <div class="stat-card"><div id="stat-total" style="font-size:24px; font-weight:bold;">0</div><small>Posts</small></div>
+                    <div class="stat-card"><div id="stat-storage" style="font-size:24px; font-weight:bold;">0 MB</div><small>Storage</small></div>
+                    <div class="stat-card"><div id="stat-expiry" style="font-size:24px; font-weight:bold;">0</div><small>Expiring Soon</small></div>
+                </div>
+                <div id="admin-posts"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="admin-modal" style="display:none;" class="modal show">
+        <div class="modal-content">
+            <h3>Admin Access</h3>
+            <input type="password" id="admin-pass" placeholder="Password" style="margin:15px 0;">
+            <button class="btn btn-primary" onclick="verifyAdmin()">Login</button>
+            <button class="btn" style="margin-top:10px; background:transparent;" onclick="closeAdminModal()">Cancel</button>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. CONFIGURATION ---
+        const BUCKET_NAME = 'enviar_files';
+        const ADMIN_PASS = 'soywaga246'; // Update this!
+        const CONFIG = {
+            url: ' https://ckqzbooohbutgtqyzhbr.supabase.co/', // Get from Settings > API
+            key: 'sb_publishable_7OL2rMADZUODp09I47B11Q_5gwegzOJ' // Get from Settings > API
+        };
+
+        // --- 2. INITIALIZATION ---
+        const { createClient } = supabase;
+        const client = createClient(CONFIG.url, CONFIG.key);
+        let selectedFile = null;
+
+        // --- 3. UI UTILITIES ---
+        function showAlert(msg, type = 'success') {
+            const div = document.getElementById('alerts');
+            const alert = document.createElement('div');
+            alert.className = `alert show ${type === 'success' ? 'btn-primary' : 'btn-danger'}`;
+            alert.textContent = msg;
+            div.appendChild(alert);
+            setTimeout(() => alert.remove(), 4000);
+        }
+
+        function setLoading(btnId, isLoading) {
+            const btn = document.getElementById(btnId);
+            if (isLoading) {
+                btn.disabled = true;
+                btn.innerHTML = `<span class="loading-spinner"></span> Processing...`;
+            } else {
+                btn.disabled = false;
+                btn.innerHTML = btnId === 'btn-create' ? 'Create Post' : 'Action';
+            }
+        }
+
+        function switchTab(e, tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            e.target.classList.add('active');
+            document.getElementById(tab + '-tab').classList.add('active');
+        }
+
+        // --- 4. CORE FEATURES ---
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (file && file.size <= 5 * 1024 * 1024) {
+                selectedFile = file;
+                document.getElementById('file-info').textContent = `✓ Selected: ${file.name}`;
+            } else if (file) showAlert("File exceeds 5MB limit", "error");
+        }
+
+        async function createPost() {
+            const code = document.getElementById('create-code').value.trim().toUpperCase();
+            const msg = document.getElementById('create-message').value.trim();
+            if (!code) return showAlert("Search code required", "error");
+            if (code.length < 3) return showAlert("Code too short", "error");
+
+            setLoading('btn-create', true);
+            let fileUrl = null, storagePath = null;
+
+            try {
+                if (selectedFile) {
+                    // Sanitize file name
+                    storagePath = `${Date.now()}-${selectedFile.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
+                    const { error: uploadError } = await client.storage.from(BUCKET_NAME).upload(storagePath, selectedFile);
+                    if (uploadError) throw uploadError;
+                    
+                    const { data: urlData } = client.storage.from(BUCKET_NAME).getPublicUrl(storagePath);
+                    fileUrl = urlData.publicUrl;
+                }
+
+                const deleteCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+                const expiry = new Date();
+                expiry.setHours(expiry.getHours() + 24);
+
+                const { error: dbError } = await client.from('posts').insert([{
+                    code, message: msg, file_name: selectedFile?.name, 
+                    file_url: fileUrl, file_path: storagePath, file_size: selectedFile?.size || 0,
+                    delete_code: deleteCode, expires_at: expiry.toISOString()
+                }]);
+
+                if (dbError) throw dbError;
+
+                document.getElementById('create-tab').innerHTML = `
+                    <div class="card" style="text-align:center; border: 2px solid var(--accent-success);">
+                        <h3 style="color:var(--accent-success)">Post Created!</h3>
+                        <p style="margin:10px 0;">Delete Code:</p>
+                        <div style="font-size:32px; font-weight:bold; letter-spacing:4px; margin-bottom:15px;">${deleteCode}</div>
+                        <p style="font-size:12px; opacity:0.7;">Save this code. It is required for deletion and expires in 24 hours.</p>
+                        <button class="btn btn-primary" style="margin-top:20px;" onclick="location.reload()">Create Another</button>
+                    </div>`;
+            } catch (err) {
+                console.error("Creation failed:", err);
+                showAlert(`Error: ${err.message}`, "error");
+            } finally { setLoading('btn-create', false); }
+        }
+
+        async function searchPosts() {
+            const query = document.getElementById('search-input').value.trim().toUpperCase();
+            const resultsDiv = document.getElementById('search-results');
+            resultsDiv.innerHTML = "<p>Searching...</p>";
+
+            const { data, error } = await client.from('posts')
+                .select('*')
+                .eq('code', query)
+                .gt('expires_at', new Date().toISOString());
+
+            if (error) return showAlert(error.message, "error");
+
+            resultsDiv.innerHTML = data?.length ? data.map(p => `
+                <div class="post-item">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                        <strong style="color:var(--accent-primary);">${p.code}</strong>
+                        <small style="opacity:0.6;">Expires: ${new Date(p.expires_at).toLocaleTimeString()}</small>
+                    </div>
+                    <p>${p.message || ''}</p>
+                    ${p.file_url ? `<a href="${p.file_url}" target="_blank" class="btn btn-primary" style="display:block; text-decoration:none; margin-top:10px; text-align:center;">Download ${p.file_name}</a>` : ''}
+                </div>`).join('') : "<p>No posts found for this code.</p>";
+        }
+
+        // --- 5. DELETION LOGIC (Two-Step) ---
+        async function previewDelete() {
+            const code = document.getElementById('delete-code-input').value.trim().toUpperCase();
+            if (code.length !== 6) return showAlert("Enter a valid 6-char code", "error");
+
+            const previewDiv = document.getElementById('delete-preview');
+            previewDiv.innerHTML = "<p>Verifying code...</p>";
+
+            const { data, error } = await client.from('posts').select('*').eq('delete_code', code).maybeSingle();
+            
+            if (error || !data) {
+                previewDiv.innerHTML = "";
+                return showAlert("Post not found or code invalid", "error");
+            }
+
+            previewDiv.innerHTML = `
+                <div class="card" style="border: 1px solid var(--accent-danger);">
+                    <h3>Confirm Deletion</h3>
+                    <div style="margin:15px 0; opacity:0.8;">
+                        <div>Code: <strong>${data.code}</strong></div>
+                        <div>Message: ${data.message || 'None'}</div>
+                        <div>File: ${data.file_name || 'None'}</div>
+                    </div>
+                    <button class="btn btn-danger" id="btn-confirm-del" onclick="executeDelete('${data.id}', '${data.file_path}')">Delete Permanently</button>
+                    <button class="btn" style="background:transparent; margin-top:10px;" onclick="location.reload()">Cancel</button>
+                </div>`;
+            document.getElementById('delete-initial').style.display = 'none';
+        }
+
+        async function executeDelete(id, filePath) {
+            setLoading('btn-confirm-del', true);
+            try {
+                // 1. Delete File from Storage
+                if (filePath) {
+                    const { error: storageError } = await client.storage.from(BUCKET_NAME).remove([filePath]);
+                    if (storageError) console.warn("Storage cleanup failed:", storageError);
+                }
+                // 2. Delete Record
+                const { error: dbError } = await client.from('posts').delete().eq('id', id);
+                if (dbError) throw dbError;
+
+                showAlert("Post deleted successfully");
+                location.reload();
+            } catch (err) {
+                showAlert(err.message, "error");
+                setLoading('btn-confirm-del', false);
+            }
+        }
+
+        // --- 6. ADMIN DASHBOARD ---
+        function openAdminModal() { document.getElementById('admin-modal').style.display = 'flex'; }
+        function closeAdminModal() { document.getElementById('admin-modal').style.display = 'none'; }
+        
+        function verifyAdmin() {
+            if (document.getElementById('admin-pass').value === ADMIN_PASS) {
+                closeAdminModal();
+                document.getElementById('main-app').style.display = 'none';
+                document.getElementById('admin-panel').style.display = 'block';
+                loadAdmin();
+            } else showAlert("Incorrect password", "error");
+        }
+
+        function exitAdmin() {
+            document.getElementById('admin-panel').style.display = 'none';
+            document.getElementById('main-app').style.display = 'block';
+        }
+
+        async function loadAdmin() {
+            const { data: posts, error } = await client.from('posts').select('*').order('created_at', { ascending: false });
+            if (error) return showAlert(error.message, "error");
+
+            let totalSize = 0, expiringCount = 0;
+            const now = new Date();
+
+            const postsHtml = posts.map(p => {
+                totalSize += (p.file_size || 0);
+                const expiry = new Date(p.expires_at);
+                if (expiry - now < 3600000) expiringCount++; // Within 1 hour
+
+                return `
+                    <div class="post-item">
+                        <div style="display:flex; justify-content:space-between; font-size:14px;">
+                            <span>Code: <strong>${p.code}</strong> | Del: <code>${p.delete_code}</code></span>
+                            <button class="btn btn-danger" style="width:auto; padding:2px 10px;" onclick="executeDelete('${p.id}', '${p.file_path}')">Del</button>
+                        </div>
+                    </div>`;
+            }).join('');
+
+            document.getElementById('stat-total').textContent = posts.length;
+            document.getElementById('stat-storage').textContent = (totalSize / (1024 * 1024)).toFixed(2) + " MB";
+            document.getElementById('stat-expiry').textContent = expiringCount;
+            document.getElementById('admin-posts').innerHTML = postsHtml || "<p>No posts found.</p>";
+        }
+    </script>
+</body>
+</html>
