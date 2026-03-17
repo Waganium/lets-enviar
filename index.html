@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enviar - Secure File Sharing</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">enviar</div>
+            <button class="btn btn-danger" style="width: auto;" onclick="openAdminModal()">Admin</button>
+        </header>
+
+        <div id="alerts"></div>
+
+        <div id="main-app">
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab(event, 'create')">Create</button>
+                <button class="tab" onclick="switchTab(event, 'search')">Search</button>
+                <button class="tab" onclick="switchTab(event, 'delete')">Delete</button>
+            </div>
+
+            <div id="create-tab" class="tab-content active">
+                <div class="card">
+                    <div class="form-group">
+                        <label>Search Code</label>
+                        <input type="text" id="create-code" placeholder="e.g., MATH101">
+                    </div>
+                    <div class="file-upload" onclick="document.getElementById('file-input').click()">
+                        <input type="file" id="file-input" hidden onchange="handleFileSelect(event)">
+                        <div id="upload-label">📁 Click to upload or drag & drop (Max 5MB)</div>
+                        <div id="file-info" style="margin-top:10px; font-weight: bold; color: var(--accent-primary);"></div>
+                    </div>
+                    <textarea id="create-message" placeholder="Add an optional message..."></textarea>
+                    <button class="btn btn-primary" id="btn-create" style="margin-top:20px;" onclick="createPost()">Create Post</button>
+                </div>
+            </div>
+
+            <div id="search-tab" class="tab-content">
+                <div class="card">
+                    <input type="text" id="search-input" placeholder="Enter search code">
+                    <button class="btn btn-primary" style="margin-top:15px;" onclick="searchPosts()">Find Posts</button>
+                </div>
+                <div id="search-results"></div>
+            </div>
+
+            <div id="delete-tab" class="tab-content">
+                <div class="card" id="delete-initial">
+                    <input type="text" id="delete-code-input" placeholder="Enter 6-char Delete Code">
+                    <button class="btn btn-danger" style="margin-top:15px;" onclick="previewDelete()">Preview & Delete</button>
+                </div>
+                <div id="delete-preview"></div>
+            </div>
+        </div>
+
+        <div id="admin-panel" style="display:none;">
+            <div class="card">
+                <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
+                    <h2>Admin Dashboard</h2>
+                    <button class="btn btn-primary" style="width:auto;" onclick="exitAdmin()">Exit</button>
+                </div>
+                <div class="admin-stats">
+                    <div class="stat-card"><div id="stat-total" style="font-size:24px; font-weight:bold;">0</div><small>Posts</small></div>
+                    <div class="stat-card"><div id="stat-storage" style="font-size:24px; font-weight:bold;">0 MB</div><small>Storage</small></div>
+                    <div class="stat-card"><div id="stat-expiry" style="font-size:24px; font-weight:bold;">0</div><small>Expiring Soon</small></div>
+                </div>
+                <div id="admin-posts"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="admin-modal" style="display:none;" class="modal show">
+        <div class="modal-content">
+            <h3>Admin Access</h3>
+            <input type="password" id="admin-pass" placeholder="Password" style="margin:15px 0;">
+            <button class="btn btn-primary" onclick="verifyAdmin()">Login</button>
+            <button class="btn" style="margin-top:10px; background:transparent;" onclick="closeAdminModal()">Cancel</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
