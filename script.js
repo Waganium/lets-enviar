@@ -181,13 +181,43 @@ function exitAdmin() { location.reload(); }
 
 async function loadAdmin() {
     if (!client) return;
-    const { data: posts } = await client.from('posts').select('*').order('created_at', { ascending: false });
-    document.getElementById('stat-total').textContent = posts ? posts.length : 0;
-    document.getElementById('admin-posts').innerHTML = posts ? posts.map(p => `
-        <div class="post-item">
-            <span>Code: ${p.code} | Del: ${p.delete_code}</span>
-            <button class="btn btn-danger" style="width:auto; float:right;" onclick="executeDelete('${p.id}', '${p.file_path}')">Del</button>
-        </div>`).join('') : "<p>No posts found.</p>";
+    
+    const { data: posts, error } = await client
+        .from('posts')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+    if (error) return showAlert("Admin load failed: " + error.message, "error");
+
+    let totalSizeBytes = 0;
+    let expiringCount = 0;
+    const now = new Date();
+
+    const postsHtml = posts.map(p => {
+        // Add to total size - ensuring we handle null/undefined as 0
+        totalSizeBytes += Number(p.file_size || 0);
+
+        const expiry = new Date(p.expires_at);
+        if (expiry - now < 3600000) expiringCount++; // Within 1 hour
+
+        return `
+            <div class="post-item">
+                <div style="display:flex; justify-content:space-between; font-size:14px;">
+                    <span>Code: <strong>${p.code}</strong> | Del: <code>${p.delete_code}</code></span>
+                    <button class="btn btn-danger" style="width:auto; padding:2px 10px;" 
+                        onclick="executeDelete('${p.id}', '${p.file_path}')">Del</button>
+                </div>
+            </div>`;
+    }).join('');
+
+    // Update the UI
+    document.getElementById('stat-total').textContent = posts.length;
+    document.getElementById('stat-expiry').textContent = expiringCount;
+    document.getElementById('admin-posts').innerHTML = postsHtml || "<p>No posts found.</p>";
+
+    // Calculate MB and update the storage card
+    const totalMB = (totalSizeBytes / (1024 * 1024)).toFixed(2);
+    document.getElementById('stat-storage').textContent = `${totalMB} MB`;
 }
 
 // --- THEME TOGGLE LOGIC ---
