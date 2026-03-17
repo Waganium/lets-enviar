@@ -189,3 +189,25 @@ async function loadAdmin() {
             <button class="btn btn-danger" style="width:auto; float:right;" onclick="executeDelete('${p.id}', '${p.file_path}')">Del</button>
         </div>`).join('') : "<p>No posts found.</p>";
 }
+
+// --- THEME TOGGLE LOGIC ---
+const themeToggle = document.getElementById('theme-toggle');
+const htmlElement = document.documentElement;
+
+// 1. Check for saved theme or system preference
+const savedTheme = localStorage.getItem('theme') || 'dark';
+htmlElement.setAttribute('data-theme', savedTheme);
+updateToggleIcon(savedTheme);
+
+themeToggle.addEventListener('click', () => {
+    const currentTheme = htmlElement.getAttribute('data-theme');
+    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    
+    htmlElement.setAttribute('data-theme', newTheme);
+    localStorage.setItem('theme', newTheme);
+    updateToggleIcon(newTheme);
+});
+
+function updateToggleIcon(theme) {
+    themeToggle.textContent = theme === 'dark' ? '🌙 Dark' : '☀️ Light';
+}
