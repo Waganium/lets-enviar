@@ -1,6 +1,6 @@
 // --- 1. CONFIGURATION & SECURE INITIALIZATION ---
-const BUCKET_NAME = 'enviar_files_are_here';
-const ADMIN_PASS = 'waga246'; 
+const BUCKET_NAME = 'enviar_files';
+const ADMIN_PASS = 'soywaga246'; 
 
 let client = null; // The Supabase client starts as null
 
