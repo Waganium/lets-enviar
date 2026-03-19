@@ -1,6 +1,6 @@
 // --- 1. CONFIGURATION & SECURE INITIALIZATION ---
 const BUCKET_NAME = 'enviar_files_are_here';
-const ADMIN_PASS = 'waga246';
+
 
 let client = null;
 
