@@ -4,41 +4,40 @@
     box-sizing: border-box;
 }
 
-/* --- 1. THEME DEFINITIONS --- */
-:root[data-theme="dark"] {
+:root {
     --bg-primary: #000000;
     --bg-secondary: #1a1a1a;
     --bg-tertiary: #2a2a2a;
     --text-primary: #ffffff;
     --text-secondary: #a0a0a0;
     --accent-primary: #3b82f6;
+    --accent-success: #10b981;
+    --accent-danger: #ef4444;
+    --accent-warning: #f59e0b;
     --border-color: #333333;
 }
 
-:root[data-theme="light"] {
-    --bg-primary: #f3f4f6;    /* Light Gray */
-    --bg-secondary: #ffffff;  /* White */
-    --bg-tertiary: #e5e7eb;   /* Soft Gray */
-    --text-primary: #111827;  /* Near Black */
-    --text-secondary: #4b5563; /* Dark Gray */
-    --accent-primary: #2563eb; /* Deeper Blue */
-    --border-color: #d1d5db;  /* Light Border */
+/* ── LIGHT MODE ───────────────────────────────────────── */
+body.light-mode {
+    --bg-primary: #f4f6f9;
+    --bg-secondary: #ffffff;
+    --bg-tertiary: #e8ecf1;
+    --text-primary: #111827;
+    --text-secondary: #6b7280;
+    --accent-primary: #2563eb;
+    --accent-success: #059669;
+    --accent-danger: #dc2626;
+    --accent-warning: #d97706;
+    --border-color: #d1d5db;
 }
 
-/* --- 2. BASE STYLES --- */
-body { 
-    font-family: -apple-system, system-ui, sans-serif; 
-    background: var(--bg-primary); 
-    color: var(--text-primary); 
-    transition: background 0.3s, color 0.3s; /* Smooth transition */
-}
-
-/* Ensure inputs and cards also use these variables */
-.card { 
-    background: var(--bg-secondary); border: 1px solid var(--border-color); 
-}
-input, textarea { 
-    background: var(--bg-primary); color: var(--text-primary); border: 1px solid var(--border-color); 
+body {
+    font-family: -apple-system, system-ui, sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    line-height: 1.6;
+    min-height: 100vh;
+    transition: background 0.3s, color 0.3s;
 }
 
 .container {
@@ -56,6 +55,43 @@ header {
     margin-bottom: 30px;
 }
 
+.header-right {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.logo {
+    font-size: 24px;
+    font-weight: 800;
+    letter-spacing: -1px;
+    color: var(--text-primary);
+}
+
+/* ── FIX 1: Theme toggle button ──────────────────────── */
+.theme-toggle {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    padding: 8px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 1;
+    transition: 0.2s;
+}
+
+.theme-toggle:hover {
+    opacity: 0.8;
+}
+
+/* Admin button: always white text on red bg */
+.btn-danger {
+    background: var(--accent-danger);
+    color: #ffffff !important;
+}
+
+/* ── TABS ─────────────────────────────────────────────── */
 .tabs {
     display: flex;
     gap: 10px;
@@ -71,6 +107,7 @@ header {
     cursor: pointer;
     border-bottom: 3px solid transparent;
     font-weight: bold;
+    transition: color 0.2s;
 }
 
 .tab.active {
@@ -86,14 +123,28 @@ header {
     display: block;
 }
 
+/* ── CARD ─────────────────────────────────────────────── */
 .card {
     background: var(--bg-secondary);
     border: 1px solid var(--border-color);
     border-radius: 12px;
     padding: 25px;
     margin-bottom: 20px;
+    transition: border-color 0.3s, box-shadow 0.3s;
 }
 
+/* FIX 3: Post result card border states */
+.card.card-success {
+    border: 2px solid var(--accent-success) !important;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.12);
+}
+
+.card.card-error {
+    border: 2px solid var(--accent-danger) !important;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.12);
+}
+
+/* ── INPUTS ───────────────────────────────────────────── */
 input,
 textarea {
     width: 100%;
@@ -103,6 +154,20 @@ textarea {
     border-radius: 6px;
     color: var(--text-primary);
     margin-top: 5px;
+    transition: background 0.3s, color 0.3s, border-color 0.3s;
+}
+
+input::placeholder,
+textarea::placeholder {
+    color: var(--text-secondary);
+}
+
+.form-group label {
+    color: var(--text-secondary);
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .file-upload {
@@ -112,8 +177,16 @@ textarea {
     text-align: center;
     cursor: pointer;
     margin: 15px 0;
+    color: var(--text-secondary);
+    transition: border-color 0.2s, background 0.2s;
 }
 
+.file-upload:hover {
+    border-color: var(--accent-primary);
+    background: rgba(59, 130, 246, 0.05);
+}
+
+/* ── BUTTONS ──────────────────────────────────────────── */
 .btn {
     padding: 12px 20px;
     border-radius: 6px;
@@ -121,7 +194,12 @@ textarea {
     border: none;
     font-weight: bold;
     width: 100%;
-    transition: 0.2s;
+    transition: opacity 0.2s, transform 0.1s;
+}
+
+.btn:hover:not(:disabled) {
+    opacity: 0.88;
+    transform: translateY(-1px);
 }
 
 .btn:disabled {
@@ -131,37 +209,71 @@ textarea {
 
 .btn-primary {
     background: var(--accent-primary);
-    color: white;
+    color: #ffffff !important;
 }
 
-.btn-danger {
-    background: var(--accent-danger);
-    color: white;
-}
-
+/* ── FIX 2: Alert box — always visible, properly boxed ── */
 .alert {
     position: fixed;
     top: 20px;
     right: 20px;
-    padding: 15px;
-    border-radius: 6px;
+    padding: 14px 18px;
+    border-radius: 8px;
     display: none;
     z-index: 2000;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    min-width: 260px;
+    max-width: 360px;
+    font-weight: 600;
+    font-size: 14px;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.4);
+    border: 1.5px solid transparent;
+    animation: slideIn 0.25s ease;
 }
 
 .alert.show {
     display: block;
 }
 
+.alert.alert-success {
+    background: #052e16;
+    color: #6ee7b7;
+    border-color: #059669;
+}
+
+body.light-mode .alert.alert-success {
+    background: #ecfdf5;
+    color: #065f46;
+    border-color: #059669;
+}
+
+.alert.alert-error {
+    background: #450a0a;
+    color: #fca5a5;
+    border-color: #dc2626;
+}
+
+body.light-mode .alert.alert-error {
+    background: #fef2f2;
+    color: #991b1b;
+    border-color: #dc2626;
+}
+
+@keyframes slideIn {
+    from { opacity: 0; transform: translateX(30px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+
+/* ── POST ITEMS ───────────────────────────────────────── */
 .post-item {
     background: var(--bg-tertiary);
     border: 1px solid var(--border-color);
     border-radius: 8px;
     padding: 15px;
     margin-bottom: 10px;
+    color: var(--text-primary);
 }
 
+/* ── ADMIN STATS ──────────────────────────────────────── */
 .admin-stats {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -169,39 +281,54 @@ textarea {
     margin-bottom: 20px;
 }
 
+/* FIX 5 & 6: Stat cards — values always readable */
 .stat-card {
     background: var(--bg-tertiary);
     padding: 15px;
     border-radius: 8px;
     text-align: center;
+    border: 1px solid var(--border-color);
 }
 
+.stat-value {
+    font-size: 24px;
+    font-weight: bold;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+}
+
+.stat-card small {
+    color: var(--text-secondary);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* ── LOADING SPINNER ──────────────────────────────────── */
 .loading-spinner {
     display: inline-block;
-    width: 20px;
-    height: 20px;
-    border: 3px solid rgba(255, 255, 255, .3);
+    width: 16px;
+    height: 16px;
+    border: 2.5px solid rgba(255, 255, 255, .3);
     border-radius: 50%;
     border-top-color: #fff;
-    animation: spin 1s ease-in-out infinite;
-    margin-right: 10px;
+    animation: spin 0.8s linear infinite;
+    margin-right: 8px;
     vertical-align: middle;
 }
 
 @keyframes spin {
-    to {
-        transform: rotate(360deg);
-    }
+    to { transform: rotate(360deg); }
 }
 
-/* Modal Styles */
+/* ── MODAL ────────────────────────────────────────────── */
 .modal {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.8);
+    background: rgba(0, 0, 0, 0.7);
     display: none;
     justify-content: center;
     align-items: center;
@@ -215,4 +342,22 @@ textarea {
     width: 100%;
     max-width: 400px;
     border: 1px solid var(--border-color);
+    color: var(--text-primary);
+}
+
+.modal-content h3 {
+    color: var(--text-primary);
+    margin-bottom: 4px;
+}
+
+/* ── ADMIN HEADER ─────────────────────────────────────── */
+.admin-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.admin-header h2 {
+    color: var(--text-primary);
 }
