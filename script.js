@@ -1,5 +1,5 @@
 // --- 1. CONFIGURATION & SECURE INITIALIZATION ---
-const BUCKET_NAME = 'enviar_files_are_here';
+const BUCKET_NAME = 'enviar_files';
 
 
 let client = null;
