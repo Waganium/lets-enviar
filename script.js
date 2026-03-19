@@ -1,21 +1,16 @@
 // --- 1. CONFIGURATION & SECURE INITIALIZATION ---
-const BUCKET_NAME = 'enviar_files';
- 
+const BUCKET_NAME = 'enviar_files_are_here';
+const ADMIN_PASS = 'waga246';
 
-let client = null; // The Supabase client starts as null
+let client = null;
 
-// This function "knocks" on your Vercel API door to get the keys
 async function initializeApp() {
     try {
         const response = await fetch('/api/config');
         if (!response.ok) throw new Error('Could not fetch secure configuration');
-        
         const config = await response.json();
-
-        // Now we initialize the client with the keys Vercel gave us
         const { createClient } = supabase;
         client = createClient(config.url, config.key);
-        
         console.log("✅ Secure connection to Supabase established.");
     } catch (err) {
         console.error("❌ Critical Security Error:", err);
@@ -23,17 +18,38 @@ async function initializeApp() {
     }
 }
 
-// Start the secure connection immediately
 initializeApp();
 
 let selectedFile = null;
 
+// --- THEME TOGGLE (FIX 1) ---
+function toggleTheme() {
+    const isLight = document.body.classList.toggle('light-mode');
+    document.querySelector('.theme-toggle').textContent = isLight ? '☀️' : '🌙';
+    localStorage.setItem('enviar-theme', isLight ? 'light' : 'dark');
+}
+
+// Restore saved theme on load
+(function () {
+    if (localStorage.getItem('enviar-theme') === 'light') {
+        document.body.classList.add('light-mode');
+        // Wait for DOM before updating button text
+        document.addEventListener('DOMContentLoaded', () => {
+            const btn = document.querySelector('.theme-toggle');
+            if (btn) btn.textContent = '☀️';
+        });
+    }
+})();
+
 // --- 2. UI UTILITIES ---
+
+// FIX 2: showAlert uses typed CSS classes instead of btn classes for styling
 function showAlert(msg, type = 'success') {
     const div = document.getElementById('alerts');
     if (!div) return;
     const alert = document.createElement('div');
-    alert.className = `alert show ${type === 'success' ? 'btn-primary' : 'btn-danger'}`;
+    // Use alert-success / alert-error classes (not btn-primary / btn-danger)
+    alert.className = `alert show ${type === 'success' ? 'alert-success' : 'alert-error'}`;
     alert.textContent = msg;
     div.appendChild(alert);
     setTimeout(() => alert.remove(), 4000);
@@ -65,17 +81,18 @@ function handleFileSelect(e) {
     if (file && file.size <= 5 * 1024 * 1024) {
         selectedFile = file;
         document.getElementById('file-info').textContent = `✓ Selected: ${file.name}`;
-    } else if (file) showAlert("File exceeds 5MB limit", "error");
+    } else if (file) {
+        showAlert("File exceeds 5MB limit", "error");
+    }
 }
 
 async function createPost() {
-    // GUARD: Ensure client is loaded
     if (!client) return showAlert("Connecting to server, please wait...", "error");
 
     const code = document.getElementById('create-code').value.trim().toUpperCase();
     const msg = document.getElementById('create-message').value.trim();
     if (!code) return showAlert("Search code required", "error");
-    
+
     setLoading('btn-create', true);
     let fileUrl = null, storagePath = null;
 
@@ -84,7 +101,6 @@ async function createPost() {
             storagePath = `${Date.now()}-${selectedFile.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
             const { error: uploadError } = await client.storage.from(BUCKET_NAME).upload(storagePath, selectedFile);
             if (uploadError) throw uploadError;
-            
             const { data: urlData } = client.storage.from(BUCKET_NAME).getPublicUrl(storagePath);
             fileUrl = urlData.publicUrl;
         }
@@ -94,27 +110,36 @@ async function createPost() {
         expiry.setHours(expiry.getHours() + 24);
 
         const { error: dbError } = await client.from('posts').insert([{
-            code, message: msg, file_name: selectedFile?.name, 
+            code, message: msg, file_name: selectedFile?.name,
             file_url: fileUrl, file_path: storagePath, file_size: selectedFile?.size || 0,
             delete_code: deleteCode, expires_at: expiry.toISOString()
         }]);
 
         if (dbError) throw dbError;
 
+        // FIX 3: Green border on success
         document.getElementById('create-tab').innerHTML = `
-            <div class="card" style="text-align:center; border: 2px solid var(--accent-success);">
-                <h3 style="color:var(--accent-success)">Post Created!</h3>
-                <p>Delete Code:</p>
-                <div style="font-size:32px; font-weight:bold; letter-spacing:4px;">${deleteCode}</div>
+            <div class="card card-success" style="text-align:center;">
+                <h3 style="color:var(--accent-success); margin-bottom:8px;">✅ Post Created!</h3>
+                <p style="color:var(--text-secondary); margin-bottom:12px;">Save your delete code:</p>
+                <div style="font-size:32px; font-weight:bold; letter-spacing:4px; color:var(--accent-success);">${deleteCode}</div>
                 <button class="btn btn-primary" style="margin-top:20px;" onclick="location.reload()">Create Another</button>
             </div>`;
     } catch (err) {
+        // FIX 3: Show error with red-bordered card
         showAlert(`Error: ${err.message}`, "error");
-    } finally { setLoading('btn-create', false); }
+        // Also visually mark the form card as errored
+        const card = document.querySelector('#create-tab .card');
+        if (card) {
+            card.classList.add('card-error');
+            setTimeout(() => card.classList.remove('card-error'), 3000);
+        }
+    } finally {
+        setLoading('btn-create', false);
+    }
 }
 
 async function searchPosts() {
-    // GUARD: Ensure client is loaded
     if (!client) return showAlert("Please wait for secure connection...", "error");
 
     const query = document.getElementById('search-input').value.trim().toUpperCase();
@@ -132,11 +157,11 @@ async function searchPosts() {
         <div class="post-item">
             <div style="display:flex; justify-content:space-between;">
                 <strong style="color:var(--accent-primary);">${p.code}</strong>
-                <small>Expires: ${new Date(p.expires_at).toLocaleTimeString()}</small>
+                <small style="color:var(--text-secondary);">Expires: ${new Date(p.expires_at).toLocaleTimeString()}</small>
             </div>
-            <p>${p.message || ''}</p>
+            <p style="margin-top:6px;">${p.message || ''}</p>
             ${p.file_url ? `<a href="${p.file_url}" target="_blank" class="btn btn-primary" style="display:block; text-decoration:none; margin-top:10px; text-align:center;">Download</a>` : ''}
-        </div>`).join('') : "<p>No posts found.</p>";
+        </div>`).join('') : "<p style='color:var(--text-secondary);'>No posts found.</p>";
 }
 
 // --- 4. DELETION & ADMIN ---
@@ -146,13 +171,14 @@ async function previewDelete() {
     const code = document.getElementById('delete-code-input').value.trim().toUpperCase();
     const previewDiv = document.getElementById('delete-preview');
     const { data, error } = await client.from('posts').select('*').eq('delete_code', code).maybeSingle();
-    
+
     if (error || !data) return showAlert("Invalid code", "error");
 
     previewDiv.innerHTML = `
         <div class="card" style="border: 1px solid var(--accent-danger);">
-            <h3>Confirm Deletion</h3>
-            <button class="btn btn-danger" id="btn-confirm-del" onclick="executeDelete('${data.id}', '${data.file_path}')">Delete Permanently</button>
+            <h3 style="color:var(--accent-danger); margin-bottom:12px;">Confirm Deletion</h3>
+            <p style="color:var(--text-secondary); margin-bottom:16px;">Code: <strong style="color:var(--text-primary);">${data.code}</strong></p>
+            <button class="btn btn-danger" id="btn-confirm-del" onclick="executeDelete('${data.id}', '${data.file_path || ''}')">Delete Permanently</button>
         </div>`;
     document.getElementById('delete-initial').style.display = 'none';
 }
@@ -160,17 +186,26 @@ async function previewDelete() {
 async function executeDelete(id, filePath) {
     if (!client) return;
     setLoading('btn-confirm-del', true);
-    if (filePath) await client.storage.from(BUCKET_NAME).remove([filePath]);
-    await client.from('posts').delete().eq('id', id);
-    location.reload();
+    try {
+        if (filePath) await client.storage.from(BUCKET_NAME).remove([filePath]);
+        await client.from('posts').delete().eq('id', id);
+        showAlert("Post deleted successfully.", "success");
+
+        // FIX 4: If in admin panel, reload only the posts list — do NOT reload the page
+        if (document.getElementById('admin-panel').style.display !== 'none') {
+            await loadAdmin(); // refresh stats + list in-place
+        } else {
+            location.reload(); // only reload when deleting from the Delete tab
+        }
+    } catch (err) {
+        showAlert("Delete failed: " + err.message, "error");
+        setLoading('btn-confirm-del', false);
+    }
 }
 
 function openAdminModal() { document.getElementById('admin-modal').style.display = 'flex'; }
 function closeAdminModal() { document.getElementById('admin-modal').style.display = 'none'; }
-
-
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 async function verifyAdmin() {
     const password = document.getElementById('admin-pass').value;
     
@@ -189,14 +224,12 @@ async function verifyAdmin() {
         showAlert("Incorrect password", "error");
     }
 }
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 function exitAdmin() { location.reload(); }
 
 async function loadAdmin() {
     if (!client) return;
-    
+
     const { data: posts, error } = await client
         .from('posts')
         .select('*')
@@ -209,50 +242,25 @@ async function loadAdmin() {
     const now = new Date();
 
     const postsHtml = posts.map(p => {
-        // Add to total size - ensuring we handle null/undefined as 0
         totalSizeBytes += Number(p.file_size || 0);
-
         const expiry = new Date(p.expires_at);
-        if (expiry - now < 3600000) expiringCount++; // Within 1 hour
+        if (expiry - now < 3600000) expiringCount++;
 
         return `
-            <div class="post-item">
-                <div style="display:flex; justify-content:space-between; font-size:14px;">
+            <div class="post-item" id="post-row-${p.id}">
+                <div style="display:flex; justify-content:space-between; align-items:center; font-size:14px;">
                     <span>Code: <strong>${p.code}</strong> | Del: <code>${p.delete_code}</code></span>
-                    <button class="btn btn-danger" style="width:auto; padding:2px 10px;" 
-                        onclick="executeDelete('${p.id}', '${p.file_path}')">Del</button>
+                    <button class="btn btn-danger" style="width:auto; padding:4px 12px;"
+                        onclick="executeDelete('${p.id}', '${p.file_path || ''}')">Del</button>
                 </div>
             </div>`;
     }).join('');
 
-    // Update the UI
+    // FIX 5 & 6: Update stat values — these now use .stat-value class for correct color
     document.getElementById('stat-total').textContent = posts.length;
     document.getElementById('stat-expiry').textContent = expiringCount;
-    document.getElementById('admin-posts').innerHTML = postsHtml || "<p>No posts found.</p>";
+    document.getElementById('admin-posts').innerHTML = postsHtml || "<p style='color:var(--text-secondary);'>No posts found.</p>";
 
-    // Calculate MB and update the storage card
     const totalMB = (totalSizeBytes / (1024 * 1024)).toFixed(2);
     document.getElementById('stat-storage').textContent = `${totalMB} MB`;
-}
-
-// --- THEME TOGGLE LOGIC ---
-const themeToggle = document.getElementById('theme-toggle');
-const htmlElement = document.documentElement;
-
-// 1. Check for saved theme or system preference
-const savedTheme = localStorage.getItem('theme') || 'dark';
-htmlElement.setAttribute('data-theme', savedTheme);
-updateToggleIcon(savedTheme);
-
-themeToggle.addEventListener('click', () => {
-    const currentTheme = htmlElement.getAttribute('data-theme');
-    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-    
-    htmlElement.setAttribute('data-theme', newTheme);
-    localStorage.setItem('theme', newTheme);
-    updateToggleIcon(newTheme);
-});
-
-function updateToggleIcon(theme) {
-    themeToggle.textContent = theme === 'dark' ? '🌙 Dark' : '☀️ Light';
 }
