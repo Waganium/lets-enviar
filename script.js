@@ -1,6 +1,6 @@
 // --- 1. CONFIGURATION & SECURE INITIALIZATION ---
 const BUCKET_NAME = 'enviar_files';
-const ADMIN_PASS = 'soywaga246'; 
+ 
 
 let client = null; // The Supabase client starts as null
 
@@ -168,14 +168,29 @@ async function executeDelete(id, filePath) {
 function openAdminModal() { document.getElementById('admin-modal').style.display = 'flex'; }
 function closeAdminModal() { document.getElementById('admin-modal').style.display = 'none'; }
 
-function verifyAdmin() {
-    if (document.getElementById('admin-pass').value === ADMIN_PASS) {
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+async function verifyAdmin() {
+    const password = document.getElementById('admin-pass').value;
+    
+    const res = await fetch('/api/admin-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password })
+    });
+    
+    if (res.ok) {
         closeAdminModal();
         document.getElementById('main-app').style.display = 'none';
         document.getElementById('admin-panel').style.display = 'block';
         loadAdmin();
-    } else showAlert("Incorrect password", "error");
+    } else {
+        showAlert("Incorrect password", "error");
+    }
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 function exitAdmin() { location.reload(); }
 
