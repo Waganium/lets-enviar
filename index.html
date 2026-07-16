@@ -95,18 +95,19 @@
             <button class="btn" style="margin-top:10px; background:transparent; color:var(--text-secondary);" onclick="closeAdminModal()">Cancel</button>
         </div>
     </div>
-    <div id="netlify-popup" class="popup-overlay" style="display:none;">
-    <div class="popup-box">
-        <h2>Welcome!</h2>
-        <p>
-            This is the Netlify deployment of Enviar.
-            Click Accept to continue.
-        </p>
+    <div id="netlify-banner" class="netlify-banner" style="display:none;">
+    <div class="banner-content">
+        <span>
+            ⚠️ No cookies for pookies !
+        </span>
 
-        <button onclick="acceptNetlifyPopup()">
+        <button onclick="acceptNetlifyBanner()">
             Accept
         </button>
     </div>
+</div>
+
+<div id="page-blocker" class="page-blocker" style="display:none;"></div>
 </div>
     <script src="script.js"></script>
 </body>
