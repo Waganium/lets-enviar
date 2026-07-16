@@ -209,9 +209,14 @@ function openAdminModal() { document.getElementById('admin-modal').style.display
 function closeAdminModal() { document.getElementById('admin-modal').style.display = 'none'; }
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 async function verifyAdmin() {
-    const password = document.getElementById('admin-pass').value;
+    const password = document.getElementById('admin-pass').value
+
+    const ADMIN_API =
+    window.location.hostname.includes("netlify")
+        ? "https://nviar.vercel.app/api/admin_login"
+        : "/api/admin_login";
     
-    const res = await fetch('/api/admin_login', {
+    const res = await fetch(ADMIN_API, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ password })
