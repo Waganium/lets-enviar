@@ -20,23 +20,32 @@ client = createClient(
         showAlert("Failed to connect to Supabase.", "error");
     }
 }
-function checkNetlifyPopup() {
+function checkNetlifyBanner() {
+
     const isNetlify = window.location.hostname.includes("netlify");
 
-    if (
+    if(
         isNetlify &&
-        !localStorage.getItem("netlify_popup_seen")
-    ) {
-        document.getElementById("netlify-popup").style.display = "flex";
+        !localStorage.getItem("netlify_banner_accepted")
+    ){
+        document.getElementById("netlify-banner").style.display="block";
+        document.getElementById("page-blocker").style.display="block";
+
+        document.body.style.overflow="hidden";
     }
 }
 
-function acceptNetlifyPopup() {
-    localStorage.setItem("netlify_popup_seen", "true");
-    document.getElementById("netlify-popup").style.display = "none";
+function acceptNetlifyBanner(){
+
+    localStorage.setItem("netlify_banner_accepted","true");
+
+    document.getElementById("netlify-banner").style.display="none";
+    document.getElementById("page-blocker").style.display="none";
+
+    document.body.style.overflow="";
 }
 initializeApp();
-checkNetlifyPopup();
+checkNetlifyBanner();
 
 let selectedFile = null;
 
