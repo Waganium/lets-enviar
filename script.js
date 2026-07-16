@@ -9,8 +9,8 @@ async function initializeApp() {
         const { createClient } = supabase;
 
         client = createClient(
-            SUPABASE_URL,
-            SUPABASE_ANON_KEY
+            https://ckqzbooohbutgtqyzhbr.supabase.co/,
+            sb_publishable_7OL2rMADZUODp09I47B11Q_5gwegzOJ
         );
 
         console.log("✅ Connected to Supabase.");
