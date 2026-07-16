@@ -6,15 +6,17 @@ let client = null;
 
 async function initializeApp() {
     try {
-        const response = await fetch('/api/config');
-        if (!response.ok) throw new Error('Could not fetch secure configuration');
-        const config = await response.json();
         const { createClient } = supabase;
-        client = createClient(config.url, config.key);
-        console.log("✅ Secure connection to Supabase established.");
+
+        client = createClient(
+            SUPABASE_URL,
+            SUPABASE_ANON_KEY
+        );
+
+        console.log("✅ Connected to Supabase.");
     } catch (err) {
-        console.error("❌ Critical Security Error:", err);
-        showAlert("Failed to connect securely. Please refresh the page.", "error");
+        console.error(err);
+        showAlert("Failed to connect to Supabase.", "error");
     }
 }
 
