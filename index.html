@@ -95,7 +95,19 @@
             <button class="btn" style="margin-top:10px; background:transparent; color:var(--text-secondary);" onclick="closeAdminModal()">Cancel</button>
         </div>
     </div>
+    <div id="netlify-popup" class="popup-overlay" style="display:none;">
+    <div class="popup-box">
+        <h2>Welcome!</h2>
+        <p>
+            This is the Netlify deployment of Enviar.
+            Click Accept to continue.
+        </p>
 
+        <button onclick="acceptNetlifyPopup()">
+            Accept
+        </button>
+    </div>
+</div>
     <script src="script.js"></script>
 </body>
 </html>
