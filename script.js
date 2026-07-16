@@ -7,12 +7,13 @@ let client = null;
 async function initializeApp() {
     try {
         const { createClient } = supabase;
+        const SUPABASE_URL = "https://ckqzbooohbutgtqyzhbr.supabase.co";
+        const SUPABASE_ANON_KEY = "sb_publishable_7OL2rMADZUODp09I47B11Q_5gwegzOJ";
 
-        client = createClient(
-            https://ckqzbooohbutgtqyzhbr.supabase.co/,
-            sb_publishable_7OL2rMADZUODp09I47B11Q_5gwegzOJ
-        );
-
+client = createClient(
+    SUPABASE_URL,
+    SUPABASE_ANON_KEY
+);
         console.log("✅ Connected to Supabase.");
     } catch (err) {
         console.error(err);
