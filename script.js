@@ -19,8 +19,23 @@ async function initializeApp() {
         showAlert("Failed to connect to Supabase.", "error");
     }
 }
+function checkNetlifyPopup() {
+    const isNetlify = window.location.hostname.includes("netlify");
 
+    if (
+        isNetlify &&
+        !localStorage.getItem("netlify_popup_seen")
+    ) {
+        document.getElementById("netlify-popup").style.display = "flex";
+    }
+}
+
+function acceptNetlifyPopup() {
+    localStorage.setItem("netlify_popup_seen", "true");
+    document.getElementById("netlify-popup").style.display = "none";
+}
 initializeApp();
+checkNetlifyPopup();
 
 let selectedFile = null;
 
