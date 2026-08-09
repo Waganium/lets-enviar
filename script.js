@@ -95,11 +95,16 @@ function setLoading(btnId, isLoading) {
     }
 }
 
-function switchTab(e, tab) {
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+// --- NAVIGATION (replaces old tab bar) ---
+function goto(view) {
+    document.getElementById('home-view').style.display = 'none';
     document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-    e.target.classList.add('active');
-    document.getElementById(tab + '-tab').classList.add('active');
+    document.getElementById(view + '-tab').classList.add('active');
+}
+
+function goHome() {
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    document.getElementById('home-view').style.display = 'grid';
 }
 
 // --- 3. CORE FEATURES ---
@@ -191,7 +196,125 @@ async function searchPosts() {
         </div>`).join('') : "<p style='color:var(--text-secondary);'>No posts found.</p>";
 }
 
-// --- 4. DELETION & ADMIN ---
+// --- 4. VAULT ---
+let currentVaultCode = null;
+let selectedVaultFile = null;
+
+function handleVaultFileSelect(e) {
+    const file = e.target.files[0];
+    if (file && file.size <= 5 * 1024 * 1024) {
+        selectedVaultFile = file;
+        document.getElementById('vault-file-info').textContent = `✓ Selected: ${file.name}`;
+    } else if (file) {
+        showAlert("File exceeds 5MB limit", "error");
+    }
+}
+
+function toggleGeneralCode() {
+    const checked = document.getElementById('vault-general-check').checked;
+    document.getElementById('vault-general-code-group').style.display = checked ? 'block' : 'none';
+}
+
+function enterVault() {
+    const code = document.getElementById('vault-code-input').value.trim().toUpperCase();
+    if (!code) return showAlert("Enter a vault code", "error");
+    currentVaultCode = code;
+    document.getElementById('vault-code-label').textContent = code;
+    document.getElementById('vault-auth').style.display = 'none';
+    document.getElementById('vault-content').style.display = 'block';
+    loadVaultFiles();
+}
+
+function lockVault() {
+    currentVaultCode = null;
+    selectedVaultFile = null;
+    document.getElementById('vault-code-input').value = '';
+    document.getElementById('vault-content').style.display = 'none';
+    document.getElementById('vault-auth').style.display = 'block';
+}
+
+async function uploadToVault() {
+    if (!client) return showAlert("Connecting to server, please wait...", "error");
+    if (!currentVaultCode) return showAlert("Enter your vault first", "error");
+    if (!selectedVaultFile) return showAlert("Select a file to upload", "error");
+
+    const isGeneral = document.getElementById('vault-general-check').checked;
+    const generalCode = document.getElementById('vault-general-search-code').value.trim().toUpperCase();
+    if (isGeneral && !generalCode) return showAlert("Enter a search code for the general post", "error");
+
+    const msg = document.getElementById('vault-message').value.trim();
+
+    setLoading('btn-vault-upload', true);
+    try {
+        const storagePath = `${Date.now()}-${selectedVaultFile.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
+        const { error: uploadError } = await client.storage.from(BUCKET_NAME).upload(storagePath, selectedVaultFile);
+        if (uploadError) throw uploadError;
+        const { data: urlData } = client.storage.from(BUCKET_NAME).getPublicUrl(storagePath);
+
+        // Vault posts don't need to "expire" for the vault owner. expires_at is only
+        // ever checked by searchPosts(), which also requires `code` to match — so a
+        // vault-only file (code left null) is invisible to general search regardless
+        // of this value. For a general-post-linked file it governs when it drops out
+        // of general search, exactly like a normal Create Post upload.
+        const expiry = new Date();
+        expiry.setHours(expiry.getHours() + 24);
+
+        const { error: dbError } = await client.from('posts').insert([{
+            code: isGeneral ? generalCode : null,
+            message: msg,
+            file_name: selectedVaultFile.name,
+            file_url: urlData.publicUrl,
+            file_path: storagePath,
+            file_size: selectedVaultFile.size,
+            delete_code: Math.random().toString(36).substring(2, 8).toUpperCase(),
+            expires_at: expiry.toISOString(),
+            vault_code: currentVaultCode
+        }]);
+        if (dbError) throw dbError;
+
+        showAlert("Uploaded to vault" + (isGeneral ? " and posted publicly" : ""), "success");
+        selectedVaultFile = null;
+        document.getElementById('vault-file-info').textContent = '';
+        document.getElementById('vault-message').value = '';
+        document.getElementById('vault-general-check').checked = false;
+        document.getElementById('vault-general-search-code').value = '';
+        toggleGeneralCode();
+        await loadVaultFiles();
+    } catch (err) {
+        showAlert("Upload failed: " + err.message, "error");
+    } finally {
+        setLoading('btn-vault-upload', false);
+    }
+}
+
+async function loadVaultFiles() {
+    if (!client || !currentVaultCode) return;
+    const filesDiv = document.getElementById('vault-files');
+    filesDiv.innerHTML = "<p style='color:var(--text-secondary);'>Loading...</p>";
+
+    // No expiry filter here — vault files persist regardless of expires_at.
+    const { data, error } = await client.from('posts')
+        .select('*')
+        .eq('vault_code', currentVaultCode)
+        .order('created_at', { ascending: false });
+
+    if (error) return showAlert(error.message, "error");
+
+    filesDiv.innerHTML = data?.length ? data.map(p => `
+        <div class="post-item" id="post-row-${p.id}">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <strong style="color:var(--accent-primary);">${p.file_name || '(no file)'}</strong>
+                ${p.code ? `<small style="color:var(--text-secondary);">Public as: ${p.code}</small>` : `<small style="color:var(--text-secondary);">Private to vault</small>`}
+            </div>
+            <p style="margin-top:6px;">${p.message || ''}</p>
+            <div style="display:flex; gap:10px; margin-top:10px;">
+                ${p.file_url ? `<a href="${p.file_url}" target="_blank" class="btn btn-primary" style="text-decoration:none; text-align:center;">Download</a>` : ''}
+                <button class="btn btn-danger" onclick="executeDelete('${p.id}', '${p.file_path || ''}')">Delete</button>
+            </div>
+        </div>`).join('') : "<p style='color:var(--text-secondary);'>Your vault is empty.</p>";
+}
+
+// --- 5. DELETION & ADMIN ---
 async function previewDelete() {
     if (!client) return showAlert("System loading...", "error");
 
@@ -221,6 +344,8 @@ async function executeDelete(id, filePath) {
         // FIX 4: If in admin panel, reload only the posts list — do NOT reload the page
         if (document.getElementById('admin-panel').style.display !== 'none') {
             await loadAdmin(); // refresh stats + list in-place
+        } else if (currentVaultCode && document.getElementById('vault-content').style.display !== 'none') {
+            await loadVaultFiles(); // refresh vault list in-place — reloading the page would lose the vault session
         } else {
             location.reload(); // only reload when deleting from the Delete tab
         }
