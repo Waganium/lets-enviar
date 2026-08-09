@@ -11,23 +11,34 @@
     <div class="container">
         <header>
             <div class="logo">Nviar</div>
-            <!-- FIX 1: header-right groups theme toggle + admin btn -->
-            <div class="header-right">
-                <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">🌙</button>
-                <button class="btn btn-danger" style="width: auto;" onclick="openAdminModal()">Admin</button>
-            </div>
+            <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">🌙</button>
         </header>
 
         <div id="alerts"></div>
 
         <div id="main-app">
-            <div class="tabs">
-                <button class="tab active" onclick="switchTab(event, 'create')">Create</button>
-                <button class="tab" onclick="switchTab(event, 'search')">Search</button>
-                <button class="tab" onclick="switchTab(event, 'delete')">Delete</button>
+
+            <div id="home-view" class="home-grid">
+                <button class="home-btn" onclick="goto('create')">
+                    <span class="home-btn-icon">📤</span>
+                    <span>Create Post</span>
+                </button>
+                <button class="home-btn" onclick="goto('search')">
+                    <span class="home-btn-icon">🔍</span>
+                    <span>Search</span>
+                </button>
+                <button class="home-btn" onclick="goto('delete')">
+                    <span class="home-btn-icon">🗑️</span>
+                    <span>Delete</span>
+                </button>
+                <button class="home-btn" onclick="goto('vault')">
+                    <span class="home-btn-icon">🔒</span>
+                    <span>Vault</span>
+                </button>
             </div>
 
-            <div id="create-tab" class="tab-content active">
+            <div id="create-tab" class="tab-content">
+                <button class="back-btn" onclick="goHome()">← Back</button>
                 <div class="card">
                     <div class="form-group">
                         <label>Search Code</label>
@@ -44,6 +55,7 @@
             </div>
 
             <div id="search-tab" class="tab-content">
+                <button class="back-btn" onclick="goHome()">← Back</button>
                 <div class="card">
                     <input type="text" id="search-input" placeholder="Enter search code">
                     <button class="btn btn-primary" style="margin-top:15px;" onclick="searchPosts()">Find Posts</button>
@@ -52,17 +64,60 @@
             </div>
 
             <div id="delete-tab" class="tab-content">
+                <button class="back-btn" onclick="goHome()">← Back</button>
                 <div class="card" id="delete-initial">
                     <input type="text" id="delete-code-input" placeholder="Enter 6-char Delete Code">
                     <button class="btn btn-danger" style="margin-top:15px;" onclick="previewDelete()">Preview & Delete</button>
                 </div>
                 <div id="delete-preview"></div>
             </div>
+
+            <div id="vault-tab" class="tab-content">
+                <button class="back-btn" onclick="goHome()">← Back</button>
+
+                <div id="vault-auth" class="card">
+                    <h3 style="margin-bottom:6px;">Access Your Vault</h3>
+                    <p style="color:var(--text-secondary); font-size:14px; margin-bottom:14px;">Enter an existing vault code, or type a new one to create a vault. Files in your vault never expire.</p>
+                    <input type="text" id="vault-code-input" placeholder="Vault code">
+                    <button class="btn btn-primary" style="margin-top:15px;" onclick="enterVault()">Enter Vault</button>
+                </div>
+
+                <div id="vault-content" style="display:none;">
+                    <div class="card">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <h3>Vault: <span id="vault-code-label" style="color:var(--accent-primary);"></span></h3>
+                            <button class="btn" style="width:auto; background:transparent; color:var(--text-secondary); border:1px solid var(--border-color);" onclick="lockVault()">Lock</button>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="file-upload" onclick="document.getElementById('vault-file-input').click()">
+                            <input type="file" id="vault-file-input" hidden onchange="handleVaultFileSelect(event)">
+                            <div id="vault-upload-label">📁 Click to upload or drag & drop (Max 5MB)</div>
+                            <div id="vault-file-info" style="margin-top:10px; font-weight: bold; color: var(--accent-primary);"></div>
+                        </div>
+                        <textarea id="vault-message" placeholder="Add an optional message..."></textarea>
+
+                        <label class="checkbox-row">
+                            <input type="checkbox" id="vault-general-check" onchange="toggleGeneralCode()">
+                            Add to general post
+                        </label>
+                        <div id="vault-general-code-group" style="display:none; margin-top:10px;">
+                            <input type="text" id="vault-general-search-code" placeholder="Search code for the general post (e.g., MATH101)">
+                        </div>
+
+                        <button class="btn btn-primary" id="btn-vault-upload" style="margin-top:20px;" onclick="uploadToVault()">Upload to Vault</button>
+                    </div>
+
+                    <div id="vault-files"></div>
+                </div>
+            </div>
         </div>
+
+        <button class="admin-fab" onclick="openAdminModal()" title="Admin">Admin</button>
 
         <div id="admin-panel" style="display:none;">
             <div class="card">
-                <!-- FIX 4 & admin header -->
                 <div class="admin-header">
                     <h2>Admin Dashboard</h2>
                     <button class="btn btn-primary" style="width:auto;" onclick="exitAdmin()">Exit</button>
