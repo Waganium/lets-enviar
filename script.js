@@ -1,51 +1,25 @@
+
+
 // --- 1. CONFIGURATION & SECURE INITIALIZATION ---
 const BUCKET_NAME = 'enviar_files';
-
 
 let client = null;
 
 async function initializeApp() {
     try {
         const { createClient } = supabase;
-        const SUPABASE_URL = "https://ckqzbooohbutgtqyzhbr.supabase.co";
-        const SUPABASE_ANON_KEY = "sb_publishable_7OL2rMADZUODp09I47B11Q_5gwegzOJ";
+        const res = await fetch('/api/config');
+        if (!res.ok) throw new Error('Could not load config');
+        const { url, key } = await res.json();
 
-client = createClient(
-    SUPABASE_URL,
-    SUPABASE_ANON_KEY
-);
+        client = createClient(url, key);
         console.log("✅ Connected to Supabase.");
     } catch (err) {
         console.error(err);
         showAlert("Failed to connect to Supabase.", "error");
     }
 }
-function checkNetlifyBanner() {
-
-    const isNetlify = window.location.hostname.includes("netlify");
-
-    if(
-        isNetlify &&
-        !localStorage.getItem("netlify_banner_accepted")
-    ){
-        document.getElementById("netlify-banner").style.display="block";
-        document.getElementById("page-blocker").style.display="block";
-
-        document.body.style.overflow="hidden";
-    }
-}
-
-function acceptNetlifyBanner(){
-
-    localStorage.setItem("netlify_banner_accepted","true");
-
-    document.getElementById("netlify-banner").style.display="none";
-    document.getElementById("page-blocker").style.display="none";
-
-    document.body.style.overflow="";
-}
 initializeApp();
-checkNetlifyBanner();
 
 let selectedFile = null;
 
@@ -359,14 +333,9 @@ function openAdminModal() { document.getElementById('admin-modal').style.display
 function closeAdminModal() { document.getElementById('admin-modal').style.display = 'none'; }
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 async function verifyAdmin() {
-    const password = document.getElementById('admin-pass').value
+    const password = document.getElementById('admin-pass').value;
 
-    const ADMIN_API =
-    window.location.hostname.includes("netlify")
-        ? "https://nviar.vercel.app/api/admin_login"
-        : "/api/admin_login";
-    
-    const res = await fetch(ADMIN_API, {
+    const res = await fetch('/api/admin_login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ password })
