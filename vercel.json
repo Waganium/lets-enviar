@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/",
-      "has": [{ "type": "host", "value": "admin.yourdomain.com" }],
+      "has": [{ "type": "host", "value": "admin.nviar.com" }],
       "destination": "/admin.html"
     }
   ]
