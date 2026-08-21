@@ -1,8 +1,14 @@
 {
+  "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
     {
       "source": "/",
-      "has": [{ "type": "host", "value": "admin.nviar.online" }],
+      "has": [
+        {
+          "type": "host",
+          "value": "admin.nviar.online"
+        }
+      ],
       "destination": "/admin.html"
     }
   ]
