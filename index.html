@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nviar - Secure File Sharing</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">Nviar</div>
+            <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">🌙</button>
+        </header>
+
+        <div id="alerts"></div>
+
+        <div id="main-app">
+
+            <div id="home-view" class="home-grid">
+                <button class="home-btn" onclick="goto('create')">
+                    <span class="home-btn-icon">📤</span>
+                    <span>Create Post</span>
+                </button>
+                <button class="home-btn" onclick="goto('search')">
+                    <span class="home-btn-icon">🔍</span>
+                    <span>Search</span>
+                </button>
+                <button class="home-btn" onclick="goto('delete')">
+                    <span class="home-btn-icon">🗑️</span>
+                    <span>Delete</span>
+                </button>
+                <button class="home-btn" onclick="goto('vault')">
+                    <span class="home-btn-icon">🔒</span>
+                    <span>Vault</span>
+                </button>
+            </div>
+
+            <div id="create-tab" class="tab-content">
+                <button class="back-btn" onclick="goHome()">← Back</button>
+                <div class="card">
+                    <div class="form-group">
+                        <label>Search Code</label>
+                        <input type="text" id="create-code" placeholder="e.g., MATH101">
+                    </div>
+                    <div class="file-upload" onclick="document.getElementById('file-input').click()">
+                        <input type="file" id="file-input" hidden onchange="handleFileSelect(event)">
+                        <div id="upload-label">📁 Click to upload or drag & drop (Max 5MB)</div>
+                        <div id="file-info" style="margin-top:10px; font-weight: bold; color: var(--accent-primary);"></div>
+                    </div>
+                    <textarea id="create-message" placeholder="Add an optional message..."></textarea>
+                    <button class="btn btn-primary" id="btn-create" style="margin-top:20px;" onclick="createPost()">Create Post</button>
+                </div>
+            </div>
+
+            <div id="search-tab" class="tab-content">
+                <button class="back-btn" onclick="goHome()">← Back</button>
+                <div class="card">
+                    <input type="text" id="search-input" placeholder="Enter search code">
+                    <button class="btn btn-primary" style="margin-top:15px;" onclick="searchPosts()">Find Posts</button>
+                </div>
+                <div id="search-results"></div>
+            </div>
+
+            <div id="delete-tab" class="tab-content">
+                <button class="back-btn" onclick="goHome()">← Back</button>
+                <div class="card" id="delete-initial">
+                    <input type="text" id="delete-code-input" placeholder="Enter 6-char Delete Code">
+                    <button class="btn btn-danger" style="margin-top:15px;" onclick="previewDelete()">Preview & Delete</button>
+                </div>
+                <div id="delete-preview"></div>
+            </div>
+
+            <div id="vault-tab" class="tab-content">
+                <button class="back-btn" onclick="goHome()">← Back</button>
+
+                <div id="vault-auth" class="card">
+                    <h3 style="margin-bottom:6px;">Access Your Vault</h3>
+                    <p style="color:var(--text-secondary); font-size:14px; margin-bottom:14px;">Enter an existing vault code, or type a new one to create a vault. Files in your vault never expire.</p>
+                    <div class="password-field-row">
+                        <input type="password" id="vault-code-input" placeholder="Vault code">
+                        <button type="button" class="toggle-visibility-btn" onclick="toggleVaultCodeVisibility()" id="vault-code-toggle-btn">Show</button>
+                    </div>
+                    <button class="btn btn-primary" style="margin-top:15px;" id="btn-enter-vault" onclick="enterVault()">Enter Vault</button>
+
+                    <div id="vault-name-prompt" class="vault-name-prompt" style="display:none;">
+                        <p style="color:var(--text-secondary); font-size:14px; margin-bottom:8px;">This vault code doesn't exist yet — give your new vault a name:</p>
+                        <input type="text" id="vault-name-input" placeholder="e.g., My Files">
+                        <button class="btn btn-primary" style="margin-top:12px;" id="btn-confirm-vault-name" onclick="confirmVaultName()">Create Vault</button>
+                    </div>
+                </div>
+
+                <div id="vault-content" style="display:none;">
+                    <div class="card">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <h3>Vault: <span id="vault-code-label" style="color:var(--accent-primary);"></span></h3>
+                            <button class="btn" style="width:auto; background:transparent; color:var(--text-secondary); border:1px solid var(--border-color);" onclick="lockVault()">Lock</button>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="file-upload" onclick="document.getElementById('vault-file-input').click()">
+                            <input type="file" id="vault-file-input" hidden onchange="handleVaultFileSelect(event)">
+                            <div id="vault-upload-label">📁 Click to upload or drag & drop (Max 5MB)</div>
+                            <div id="vault-file-info" style="margin-top:10px; font-weight: bold; color: var(--accent-primary);"></div>
+                        </div>
+                        <textarea id="vault-message" placeholder="Add an optional message..."></textarea>
+
+                        <label class="checkbox-row">
+                            <input type="checkbox" id="vault-general-check" onchange="toggleGeneralCode()">
+                            Add to general post
+                        </label>
+                        <div id="vault-general-code-group" style="display:none; margin-top:10px;">
+                            <input type="text" id="vault-general-search-code" placeholder="Search code for the general post (e.g., MATH101)">
+                        </div>
+
+                        <button class="btn btn-primary" id="btn-vault-upload" style="margin-top:20px;" onclick="uploadToVault()">Upload to Vault</button>
+                    </div>
+
+                    <div id="vault-files"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
