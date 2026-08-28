@@ -5,16 +5,17 @@
 }
 
 :root {
-    --bg-primary: #1c140d;
-    --bg-secondary: #241a12;
-    --bg-tertiary: #2f2118;
+    --bg-primary: #090502;
+    --bg-secondary: #120b06;
+    --bg-tertiary: #1a120b;
     --text-primary: #f3e9dc;
     --text-secondary: #a89680;
     --accent-primary: #e07a3f;
     --accent-success: #8a9a5b;
     --accent-danger: #c0563a;
     --accent-warning: #d9a441;
-    --border-color: #3a2c20;
+    --border-color: #221a10;
+    --btn-border-color: #ffffff;
 }
 
 /* ── LIGHT MODE ───────────────────────────────────────── */
@@ -29,6 +30,7 @@ body.light-mode {
     --accent-success: #059669;
     --accent-danger: #a8452f;
     --accent-warning: #d97706;
+    --btn-border-color: #111827;
     --border-color: #d1d5db;
 }
 
@@ -90,6 +92,7 @@ header {
 .btn-danger {
     background: var(--accent-danger);
     color: #ffffff !important;
+    border: 1.5px solid var(--btn-border-color);
 }
 
 /* ── HOME VIEW ────────────────────────────────────────── */
@@ -262,7 +265,6 @@ textarea::placeholder {
     padding: 12px 20px;
     border-radius: 6px;
     cursor: pointer;
-    border: none;
     font-weight: bold;
     width: 100%;
     transition: opacity 0.2s, transform 0.1s;
@@ -281,6 +283,7 @@ textarea::placeholder {
 .btn-primary {
     background: var(--accent-primary);
     color: #ffffff !important;
+    border: 1.5px solid var(--btn-border-color);
 }
 
 /* ── FIX 2: Alert box — always visible, properly boxed ── */
