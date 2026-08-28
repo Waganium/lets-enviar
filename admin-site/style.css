@@ -5,29 +5,32 @@
 }
 
 :root {
-    --bg-primary: #000000;
-    --bg-secondary: #1a1a1a;
-    --bg-tertiary: #2a2a2a;
-    --text-primary: #ffffff;
-    --text-secondary: #a0a0a0;
-    --accent-primary: #3b82f6;
-    --accent-success: #10b981;
-    --accent-danger: #ef4444;
-    --accent-warning: #f59e0b;
-    --border-color: #333333;
+    --bg-primary: #090502;
+    --bg-secondary: #120b06;
+    --bg-tertiary: #1a120b;
+    --text-primary: #f3e9dc;
+    --text-secondary: #a89680;
+    --accent-primary: #e07a3f;
+    --accent-success: #8a9a5b;
+    --accent-danger: #c0563a;
+    --accent-warning: #d9a441;
+    --border-color: #221a10;
+    --btn-border-color: #ffffff;
 }
 
 /* ── LIGHT MODE ───────────────────────────────────────── */
+/* Backgrounds/text unchanged from before — only the accent (button) colors shift to match the new coffee theme */
 body.light-mode {
     --bg-primary: #f4f6f9;
     --bg-secondary: #ffffff;
     --bg-tertiary: #e8ecf1;
     --text-primary: #111827;
     --text-secondary: #6b7280;
-    --accent-primary: #2563eb;
+    --accent-primary: #b8541f;
     --accent-success: #059669;
-    --accent-danger: #dc2626;
+    --accent-danger: #a8452f;
     --accent-warning: #d97706;
+    --btn-border-color: #111827;
     --border-color: #d1d5db;
 }
 
@@ -89,6 +92,7 @@ header {
 .btn-danger {
     background: var(--accent-danger);
     color: #ffffff !important;
+    border: 1.5px solid var(--btn-border-color);
 }
 
 /* ── HOME VIEW ────────────────────────────────────────── */
@@ -261,7 +265,6 @@ textarea::placeholder {
     padding: 12px 20px;
     border-radius: 6px;
     cursor: pointer;
-    border: none;
     font-weight: bold;
     width: 100%;
     transition: opacity 0.2s, transform 0.1s;
@@ -280,6 +283,7 @@ textarea::placeholder {
 .btn-primary {
     background: var(--accent-primary);
     color: #ffffff !important;
+    border: 1.5px solid var(--btn-border-color);
 }
 
 /* ── FIX 2: Alert box — always visible, properly boxed ── */
@@ -418,6 +422,41 @@ body.light-mode .alert.alert-error {
 .modal-content h3 {
     color: var(--text-primary);
     margin-bottom: 4px;
+}
+
+/* ── VAULT CODE FIELD (masked, with show/hide) ────────── */
+.password-field-row {
+    display: flex;
+    gap: 8px;
+    align-items: stretch;
+    margin-top: 5px;
+}
+
+.password-field-row input {
+    margin-top: 0;
+    flex: 1;
+}
+
+.toggle-visibility-btn {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    border-radius: 6px;
+    padding: 0 14px;
+    cursor: pointer;
+    font-size: 14px;
+    white-space: nowrap;
+}
+
+.toggle-visibility-btn:hover {
+    color: var(--text-primary);
+}
+
+/* ── VAULT NAME PROMPT (new vault) ───────────────────── */
+.vault-name-prompt {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-color);
 }
 
 /* ── ADMIN HEADER ─────────────────────────────────────── */

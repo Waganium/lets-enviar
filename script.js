@@ -67,6 +67,30 @@ function setLoading(btnId, isLoading) {
     }
 }
 
+// --- ENTER-KEY SUPPORT ---
+// Pressing Enter in a single-line input triggers the same action as clicking
+// the associated button. Textareas are deliberately excluded so Enter still
+// inserts a newline there instead of submitting.
+function bindEnterKey(inputId, action) {
+    const el = document.getElementById(inputId);
+    if (!el) return;
+    el.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            action();
+        }
+    });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    bindEnterKey('create-code', createPost);
+    bindEnterKey('search-input', searchPosts);
+    bindEnterKey('delete-code-input', previewDelete);
+    bindEnterKey('vault-code-input', enterVault);
+    bindEnterKey('vault-name-input', confirmVaultName);
+    bindEnterKey('vault-general-search-code', uploadToVault);
+});
+
 // --- NAVIGATION (replaces old tab bar) ---
 function goto(view) {
     document.getElementById('home-view').style.display = 'none';
@@ -171,6 +195,7 @@ async function searchPosts() {
 // --- 4. VAULT ---
 let currentVaultCode = null;
 let selectedVaultFile = null;
+let pendingVaultCode = null; // set while waiting on the "name this new vault" step
 
 function handleVaultFileSelect(e) {
     const file = e.target.files[0];
@@ -187,11 +212,64 @@ function toggleGeneralCode() {
     document.getElementById('vault-general-code-group').style.display = checked ? 'block' : 'none';
 }
 
-function enterVault() {
+function toggleVaultCodeVisibility() {
+    const input = document.getElementById('vault-code-input');
+    const btn = document.getElementById('vault-code-toggle-btn');
+    const showing = input.type === 'text';
+    input.type = showing ? 'password' : 'text';
+    btn.textContent = showing ? 'Show' : 'Hide';
+}
+
+// Looks up the vault_code in the `vaults` table. Existing vaults open directly;
+// a code that's never been used before is treated as "new" and prompts for a name
+// (this also transparently migrates vaults created before the vaults table existed —
+// the first time you re-enter an old vault code, it'll ask you to name it once).
+async function enterVault() {
     const code = document.getElementById('vault-code-input').value.trim().toUpperCase();
     if (!code) return showAlert("Enter a vault code", "error");
+    if (!client) return showAlert("Connecting to server, please wait...", "error");
+
+    setLoading('btn-enter-vault', true);
+    try {
+        const { data, error } = await client.from('vaults').select('*').eq('vault_code', code).maybeSingle();
+        if (error) throw error;
+
+        if (data) {
+            openVault(code, data.vault_name);
+        } else {
+            pendingVaultCode = code;
+            document.getElementById('vault-name-prompt').style.display = 'block';
+        }
+    } catch (err) {
+        showAlert(err.message, "error");
+    } finally {
+        setLoading('btn-enter-vault', false);
+    }
+}
+
+async function confirmVaultName() {
+    const name = document.getElementById('vault-name-input').value.trim();
+    if (!name) return showAlert("Give your vault a name", "error");
+    if (!pendingVaultCode) return showAlert("Enter your vault code first", "error");
+
+    setLoading('btn-confirm-vault-name', true);
+    try {
+        const { error } = await client.from('vaults').insert([{ vault_code: pendingVaultCode, vault_name: name }]);
+        if (error) throw error;
+        openVault(pendingVaultCode, name);
+    } catch (err) {
+        showAlert(err.message, "error");
+    } finally {
+        setLoading('btn-confirm-vault-name', false);
+    }
+}
+
+function openVault(code, name) {
     currentVaultCode = code;
-    document.getElementById('vault-code-label').textContent = code;
+    pendingVaultCode = null;
+    document.getElementById('vault-code-label').textContent = name || code;
+    document.getElementById('vault-name-prompt').style.display = 'none';
+    document.getElementById('vault-name-input').value = '';
     document.getElementById('vault-auth').style.display = 'none';
     document.getElementById('vault-content').style.display = 'block';
     loadVaultFiles();
@@ -199,8 +277,12 @@ function enterVault() {
 
 function lockVault() {
     currentVaultCode = null;
+    pendingVaultCode = null;
     selectedVaultFile = null;
     document.getElementById('vault-code-input').value = '';
+    document.getElementById('vault-code-input').type = 'password';
+    document.getElementById('vault-code-toggle-btn').textContent = 'Show';
+    document.getElementById('vault-name-prompt').style.display = 'none';
     document.getElementById('vault-content').style.display = 'none';
     document.getElementById('vault-auth').style.display = 'block';
 }

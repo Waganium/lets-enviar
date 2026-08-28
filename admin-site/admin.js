@@ -55,6 +55,18 @@ function setLoading(btnId, isLoading) {
 }
 
 // --- ADMIN LOGIN ---
+document.addEventListener('DOMContentLoaded', () => {
+    const passInput = document.getElementById('admin-pass');
+    if (passInput) {
+        passInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                verifyAdmin();
+            }
+        });
+    }
+});
+
 async function verifyAdmin() {
     const password = document.getElementById('admin-pass').value;
     setLoading('btn-admin-login', true);

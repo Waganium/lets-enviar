@@ -78,8 +78,17 @@
                 <div id="vault-auth" class="card">
                     <h3 style="margin-bottom:6px;">Access Your Vault</h3>
                     <p style="color:var(--text-secondary); font-size:14px; margin-bottom:14px;">Enter an existing vault code, or type a new one to create a vault. Files in your vault never expire.</p>
-                    <input type="text" id="vault-code-input" placeholder="Vault code">
-                    <button class="btn btn-primary" style="margin-top:15px;" onclick="enterVault()">Enter Vault</button>
+                    <div class="password-field-row">
+                        <input type="password" id="vault-code-input" placeholder="Vault code">
+                        <button type="button" class="toggle-visibility-btn" onclick="toggleVaultCodeVisibility()" id="vault-code-toggle-btn">Show</button>
+                    </div>
+                    <button class="btn btn-primary" style="margin-top:15px;" id="btn-enter-vault" onclick="enterVault()">Enter Vault</button>
+
+                    <div id="vault-name-prompt" class="vault-name-prompt" style="display:none;">
+                        <p style="color:var(--text-secondary); font-size:14px; margin-bottom:8px;">This vault code doesn't exist yet — give your new vault a name:</p>
+                        <input type="text" id="vault-name-input" placeholder="e.g., My Files">
+                        <button class="btn btn-primary" style="margin-top:12px;" id="btn-confirm-vault-name" onclick="confirmVaultName()">Create Vault</button>
+                    </div>
                 </div>
 
                 <div id="vault-content" style="display:none;">
