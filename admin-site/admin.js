@@ -113,22 +113,32 @@ async function loadAdmin() {
         if (expiry - now < 3600000) expiringCount++;
 
         return `
-            <div class="post-item" id="post-row-${p.id}">
-                <div style="display:flex; justify-content:space-between; align-items:center; font-size:14px;">
-                    <span>
-                        Code: <strong>${p.code || '—'}</strong>
-                        ${p.vault_code ? ` | Vault: <strong>${p.vault_code}</strong>` : ''}
-                        | Del: <code>${p.delete_code}</code>
-                    </span>
-                    <button class="btn btn-danger" style="width:auto; padding:4px 12px;"
+            <div class="admin-row" id="post-row-${p.id}">
+                <div class="admin-cell"><strong>${p.code || '—'}</strong></div>
+                <div class="admin-cell"><code>${p.delete_code}</code></div>
+                <div class="admin-cell"><strong>${p.vault_code || '—'}</strong></div>
+                <div class="admin-cell admin-cell-action">
+                    <button class="btn btn-danger"
                         onclick="executeDelete('${p.id}', '${p.file_path || ''}')">Del</button>
                 </div>
             </div>`;
     }).join('');
 
+    const tableHtml = postsHtml ? `
+        <div class="admin-section-title">All Posts</div>
+        <div class="admin-table">
+            <div class="admin-table-head">
+                <div>Code</div>
+                <div>Delete Code</div>
+                <div>Vault</div>
+                <div></div>
+            </div>
+            ${postsHtml}
+        </div>` : '';
+
     document.getElementById('stat-total').textContent = posts.length;
     document.getElementById('stat-expiry').textContent = expiringCount;
-    document.getElementById('admin-posts').innerHTML = postsHtml || "<p style='color:var(--text-secondary);'>No posts found.</p>";
+    document.getElementById('admin-posts').innerHTML = tableHtml || "<p style='color:var(--text-secondary);'>No posts found.</p>";
 
     const totalMB = (totalSizeBytes / (1024 * 1024)).toFixed(2);
     document.getElementById('stat-storage').textContent = `${totalMB} MB`;

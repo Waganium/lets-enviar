@@ -264,8 +264,24 @@ async function confirmVaultName() {
     }
 }
 
+// Files list is collapsed by default; the Files button reveals it.
+function setVaultFilesOpen(open) {
+    const panel = document.getElementById('vault-files-panel');
+    const btn = document.getElementById('btn-vault-files');
+    if (!panel || !btn) return;
+    panel.style.display = open ? 'block' : 'none';
+    btn.classList.toggle('active', open);
+    btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+}
+
+function toggleVaultFiles() {
+    const panel = document.getElementById('vault-files-panel');
+    setVaultFilesOpen(panel.style.display === 'none');
+}
+
 function openVault(code, name) {
     currentVaultCode = code;
+    setVaultFilesOpen(false);
     pendingVaultCode = null;
     document.getElementById('vault-code-label').textContent = name || code;
     document.getElementById('vault-name-prompt').style.display = 'none';
@@ -277,6 +293,7 @@ function openVault(code, name) {
 
 function lockVault() {
     currentVaultCode = null;
+    setVaultFilesOpen(false);
     pendingVaultCode = null;
     selectedVaultFile = null;
     document.getElementById('vault-code-input').value = '';

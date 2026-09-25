@@ -118,7 +118,18 @@
                         <button class="btn btn-primary" id="btn-vault-upload" style="margin-top:20px;" onclick="uploadToVault()">Upload to Vault</button>
                     </div>
 
-                    <div id="vault-files"></div>
+                    <div class="vault-actions">
+                        <div class="vault-slot" aria-hidden="true"><!-- reserved for a future button --></div>
+                        <button type="button" class="vault-action-btn" id="btn-vault-files" aria-expanded="false" aria-controls="vault-files-panel" onclick="toggleVaultFiles()">
+                            <span class="vault-action-icon">📂</span>
+                            <span>Files</span>
+                        </button>
+                        <div class="vault-slot" aria-hidden="true"><!-- reserved for a future button --></div>
+                    </div>
+
+                    <div id="vault-files-panel" style="display:none;">
+                        <div id="vault-files"></div>
+                    </div>
                 </div>
             </div>
         </div>

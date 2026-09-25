@@ -470,3 +470,147 @@ body.light-mode .alert.alert-error {
 .admin-header h2 {
     color: var(--text-primary);
 }
+
+/* ── VAULT ACTION ROW (Files button + reserved slots) ── */
+.vault-actions {
+    display: grid;
+    grid-template-columns: 1fr 1.2fr 1fr;
+    gap: 16px;
+    align-items: stretch;
+    margin-bottom: 20px;
+}
+
+/* Empty placeholders — future vault buttons drop in here */
+.vault-slot {
+    min-width: 0;
+}
+
+.vault-action-btn {
+    grid-column: 2;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    padding: 18px 16px;
+    color: var(--text-primary);
+    font-weight: 700;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: border-color 0.2s, transform 0.15s, background 0.2s;
+}
+
+.vault-action-btn:hover {
+    border-color: var(--accent-primary);
+    transform: translateY(-2px);
+    background: var(--bg-tertiary);
+}
+
+.vault-action-btn.active {
+    border-color: var(--accent-primary);
+    background: var(--bg-tertiary);
+}
+
+.vault-action-icon {
+    font-size: 26px;
+    line-height: 1;
+}
+
+@media (max-width: 480px) {
+    .vault-actions { gap: 10px; }
+    .vault-action-btn { padding: 14px 8px; font-size: 15px; }
+}
+
+/* ── ADMIN DASHBOARD TABLE ────────────────────────────── */
+.admin-header {
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.admin-stats .stat-card {
+    border-top: 2px solid var(--accent-primary);
+}
+
+.admin-section-title {
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin: 4px 0 10px;
+}
+
+.admin-table {
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--bg-tertiary);
+}
+
+.admin-table-head,
+.admin-row {
+    display: grid;
+    grid-template-columns: 1.1fr 1.1fr 1.3fr 64px;
+    gap: 12px;
+    align-items: center;
+    padding: 12px 16px;
+}
+
+.admin-table-head {
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+}
+
+.admin-row {
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-primary);
+    font-size: 14px;
+    transition: background 0.2s;
+}
+
+.admin-row:last-child {
+    border-bottom: none;
+}
+
+.admin-row:hover {
+    background: var(--bg-secondary);
+}
+
+.admin-cell {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.admin-cell strong,
+.admin-cell code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 13px;
+}
+
+.admin-cell-action {
+    text-align: right;
+}
+
+.admin-cell-action .btn {
+    width: auto;
+    padding: 4px 12px;
+}
+
+@media (max-width: 480px) {
+    .admin-table-head,
+    .admin-row {
+        grid-template-columns: 1fr 1fr 1fr 52px;
+        gap: 8px;
+        padding: 10px 10px;
+    }
+    .admin-cell strong,
+    .admin-cell code { font-size: 12px; }
+}
